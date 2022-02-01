@@ -42,7 +42,7 @@ display.show()
 
 
 # Main state variables
-_x = 0  # 0=cfg, 10=ready, 20=set, 30=go!
+_x = 0  # 0=logo, 1=cfg, 10=ready, 20=set, 30=go!
 _z = 0  # 100ms ticks
 _n = 0  # Number of 100s counter
 
@@ -52,12 +52,25 @@ _n = 0  # Number of 100s counter
 def beepOn():
     beeper.duty(512)
 
+
 def beepOff():
     beeper.duty(0)
+
 
 def digit(m):
     return chr(m+48)
 
+# SUPER "Visual"
+SUPER = [
+    0b01110010,0b00101111,0b00111110,0b11110001,
+    0b10000010,0b00101000,0b10100000,0b10001001,
+    0b10000010,0b00101000,0b10100000,0b10001001,
+    0b01110010,0b00101111,0b00111100,0b11110001,
+    0b00001010,0b00101000,0b00100000,0b10001001,
+    0b00001010,0b00101000,0b00100000,0b10001001,
+    0b10001010,0b00101000,0b00100000,0b10001000,
+    0b01110001,0b11001000,0b00111110,0b10001001,
+]
 
 #####################################
 #
@@ -69,8 +82,40 @@ def digit(m):
 def tick(t):
     global _x, _z, _n
 
-    # Config phase -- how many 100s?
+    # Logo - some eye candy
     if _x == 0:
+        s = None
+        d = 6
+        dx = 0
+        if _z == 0:
+            s = ' SG '
+        elif _z == 1*d:
+            s = 'ELBE'
+        elif _z == 2*d:
+            s = 'Hun-'
+        elif _z == 3*d:
+            s = 'dert'
+        elif _z == 4*d:
+            s = 'auf'
+            dx = 4
+        elif _z == 5*d:
+            s = 'Zwei'
+        elif _z == 6*d:
+            s = '    ' # This is really the OFF state
+            _x = 1
+            _z = 0
+
+        if s is not None:
+            display.fill(0)
+            display.text(s, 0, 0)
+            for dd in range(dx):
+                display.scroll(1,0)
+            display.show()
+        if _x == 0:
+            _z = _z + 1
+
+    # Config phase -- how many 100s?
+    elif _x == 1:
         _y = _z
         if touch.value():
             _z = (_z + 1) % 60
@@ -91,7 +136,7 @@ def tick(t):
             display.show()
 
     # Ready phase -- wait for start
-    if 10 <= _x < 20:
+    elif 10 <= _x < 20:
         _z = (_z + 1) % 8
         display.fill(0)
         if _z >= 4:
@@ -104,16 +149,17 @@ def tick(t):
             _x = 20
             _z = 0
 
-    # Set phase -- beep three times, show 3, 2, 1, ...
-    if 20 <= _x < 30:
+    # Set phase -- beep three times, show remaining N and 3, 2, 1, ...
+    elif 20 <= _x < 30:
         if touch.value():
             beepOff()
-            _x = _z = _n = 0
+            _x = 1
+            _z = _n = 0
         else:
             if _z % 10 == 0:
                 _321 = 3 - (_z // 10)
                 display.fill(0)
-                display.text(str(_n) + ' ' +str(_321), 0, 0)
+                display.text(str(_n) + ' ' + str(_321), 0, 0)
                 display.show()
             if _z % 10 < 2:
                 beepOn()
@@ -126,23 +172,31 @@ def tick(t):
                 _z = 0
 
     # Swim!
-    if 30 <= _x < 40:
-        # BEEP Control
-        if 1170 <= _z < 1172:    # Alert Beep 3 200ms
-            beepOn()
-        elif 1180 <= _z < 1182:  # Alert Beep 2 200ms
-            beepOn()
-        elif 1190 <= _z < 1192:  # Alert Beep 1 200ms
-            beepOn()
-        elif 0 <= _z < 4:        # Start Beep ON 400ms
+    elif 30 <= _x < 400:
+        # GO BEEP Control
+        if 0 <= _z < 4:        # Start Beep ON 400ms
             beepOn()
         else:
             beepOff()
 
-        # Display Control
         if touch.value():
+            if _x < 30 + 12:
+                _x = _x + 1
+            else:
+                _x = 30
+        else:
+            if _x > 30 + 8:
+                machine.reset()
+            _x = 30
+
+        # Display Control
+        if _x > 30:
             display.fill(0)
-            display.text(str(_n), 0, 0)
+            if _x > 30 + 8:
+                display.text('OFF', 4, 0)
+            else:
+                display.text(str(_n), 0, 0)
+            display.hline(0, 7, _x - 30, 7)
             display.show()
         elif _z == 0:
             display.fill(0)
@@ -160,29 +214,31 @@ def tick(t):
             display.show()
 
         _z = _z + 1
-        if _z >= 1200:
+        if _n > 1 and _z >= 1169: # three seconds before 2:00min, but not on the last one
+            _x = 20
             _z = 0
             _n = _n - 1
-            if _n == 0:
-                _x = 40
+        if _n == 1 and _z >= 1199: # DONE!
+            _n = 0
+            _z = 0
+            _x = 400
 
     # Done
-    if 40 <= _x < 50:
+    elif 400 <= _x < 410:
         _z = (_z + 1) % 8
         display.fill(0)
         if _z >= 4:
-            display.text('DONE', 0, 0)
+            display.text('SUPR', 0, 0)
+            # ToDo
         display.show()
 
-        if _x == 41:
-            display.fill(0)
-            display.show()
+        if _x == 401:
             machine.reset()
         if touch.value():
-            _x = 41
+            _x = 401
         _n = _n + 1
-        if _n > 300:
-            _x = 41
+        if _n > 200:
+            _x = 401
 
 
 ##################
