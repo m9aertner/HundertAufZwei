@@ -1,3 +1,30 @@
+"""
+MicroPython Hundert-auf-Zwei Schwimmuhr
+
+https://github.com/m9aertner/HundertAufZwei
+
+MIT License
+Copyright (c) 2022 Matthias Gärtner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 #############################
 #
 # HundertAufZwei - Schwimmuhr
@@ -60,10 +87,10 @@ def beepOff():
 def digit(m):
     return chr(m+48)
 
-# SUPER "Visual"
+# Visuals
 SUPER = [
     0b01110010,0b00101111,0b00111110,0b11110001,
-    0b10000010,0b00101000,0b10100000,0b10001001,
+    0b10001010,0b00101000,0b10100000,0b10001001,
     0b10000010,0b00101000,0b10100000,0b10001001,
     0b01110010,0b00101111,0b00111100,0b11110001,
     0b00001010,0b00101000,0b00100000,0b10001001,
@@ -71,6 +98,16 @@ SUPER = [
     0b10001010,0b00101000,0b00100000,0b10001000,
     0b01110001,0b11001000,0b00111110,0b10001001,
 ]
+
+def visual(img):
+    """Send image (32x8 bits as 32 byte array) to display"""
+    for y8 in range(8):
+        for x4 in range(4):
+            bb = 0b10000000
+            vv = img[y8 * 4 + x4]
+            for x8 in range(8):
+                display.pixel(x4 * 8 + x8, y8, vv & bb)
+                bb = bb >> 1
 
 #####################################
 #
@@ -228,8 +265,8 @@ def tick(t):
         _z = (_z + 1) % 8
         display.fill(0)
         if _z >= 4:
-            display.text('SUPR', 0, 0)
-            # ToDo
+            visual(SUPER)
+            display.show()
         display.show()
 
         if _x == 401:
