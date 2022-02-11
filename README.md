@@ -98,9 +98,9 @@ Sonstige Einstellungen neben das Anzahl gibt es nicht. Insbesondere kann man **n
 
 # Hardware
 
-Die Uhr ist mit einem NanoPI NEO aufgebaut, an den per SPI eine 4x8x8-LED-Matrix angeschlossen ist.
+Die Uhr ist mit einem [D1 Mini NodeMcu mit ESP8266-12F](https://www.az-delivery.de/products/d1-mini) aufgebaut, an den per SPI eine [4x8x8-LED-Matrix](https://www.az-delivery.de/products/4-x-64er-led-matrix-display) angeschlossen ist.
 
-Die Sensortaste ist mit einem TTP223 aufgebaut, da der NanoPI keine eingebauten HW-Touch-Funktion enthält.
+Die Sensortaste ist mit einem TTP223 aufgebaut, da der D1 Mini keine eingebauten HW-Touch-Funktionen enthält.
 
 Softwareseitig ist das Ganze mit einer kleinen State Machine und einem Ticker von 100ms-Raster gemacht. In MicroPython, weil da ziemlich knapp formuliert werden kann, es sehr einfach zu lesen und zu warten ist und halt gerade zur Hand war.
 
